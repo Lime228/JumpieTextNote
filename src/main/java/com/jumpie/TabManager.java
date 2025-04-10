@@ -1,0 +1,92 @@
+package com.jumpie;
+
+import javax.swing.*;
+import java.awt.*;
+
+public class TabManager {
+    private JTabbedPane tabbedPane;
+
+    public TabManager() {
+        tabbedPane = new JTabbedPane();
+    }
+
+    public JTabbedPane getTabbedPane() {
+        return tabbedPane;
+    }
+
+    public void addNewTab() {
+        JTextArea textArea = new JTextArea();
+        JScrollPane scrollPane = new JScrollPane(textArea);
+
+        JPanel tabPanel = createTabHeader("New Document " + (tabbedPane.getTabCount() + 1), scrollPane);
+
+        tabbedPane.addTab(null, scrollPane);
+        tabbedPane.setTabComponentAt(tabbedPane.getTabCount() - 1, tabPanel);
+        tabbedPane.setSelectedIndex(tabbedPane.getTabCount() - 1);
+    }
+
+    public void closeCurrentTab() {
+        int index = tabbedPane.getSelectedIndex();
+        if (index != -1) {
+            tabbedPane.remove(index);
+        }
+    }
+
+    public JTextArea getCurrentTextArea() {
+        Component component = tabbedPane.getSelectedComponent();
+        if (component instanceof JScrollPane) {
+            return (JTextArea) ((JScrollPane) component).getViewport().getView();
+        }
+        return null;
+    }
+
+    public void updateTabTitle(String title) {
+        int index = tabbedPane.getSelectedIndex();
+        if (index != -1) {
+            Component tabComponent = tabbedPane.getTabComponentAt(index);
+            if (tabComponent instanceof JPanel) {
+                for (Component comp : ((JPanel) tabComponent).getComponents()) {
+                    if (comp instanceof JPanel) {
+                        for (Component headerComp : ((JPanel) comp).getComponents()) {
+                            if (headerComp instanceof JLabel) {
+                                ((JLabel) headerComp).setText(title);
+                                return;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private JPanel createTabHeader(String title, JScrollPane scrollPane) {
+        JPanel tabPanel = new JPanel(new BorderLayout());
+        tabPanel.setOpaque(false);
+
+        JLabel tabLabel = new JLabel(title);
+        JButton closeButton = createCloseButton(scrollPane);
+
+        JPanel tabHeader = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+        tabHeader.setOpaque(false);
+        tabHeader.add(tabLabel);
+        tabHeader.add(closeButton);
+
+        tabPanel.add(tabHeader, BorderLayout.CENTER);
+        return tabPanel;
+    }
+
+    private JButton createCloseButton(JScrollPane scrollPane) {
+        JButton closeButton = new JButton("x");
+        closeButton.setMargin(new Insets(0, 5, 0, 0));
+        closeButton.setBorderPainted(false);
+        closeButton.setContentAreaFilled(false);
+        closeButton.setFocusPainted(false);
+
+        closeButton.addActionListener(e -> {
+            int index = tabbedPane.indexOfComponent(scrollPane);
+            if (index != -1) tabbedPane.remove(index);
+        });
+
+        return closeButton;
+    }
+}
