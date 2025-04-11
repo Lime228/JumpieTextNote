@@ -22,22 +22,31 @@ public class EditorMain extends JFrame implements ActionListener, TextAppender {
         try {
             UIManager.setLookAndFeel("com.formdev.flatlaf.FlatDarkLaf");
 
-            UIManager.put("Panel.background", new Color(80, 80, 80));
-            UIManager.put("Viewport.background", new Color(80, 80, 80));
+            // Основной серый фон
+            UIManager.put("Panel.background", new Color(60, 63, 65));
+            UIManager.put("Viewport.background", new Color(60, 63, 65));
+            UIManager.put("TextArea.background", new Color(45, 45, 50));
 
-            UIManager.put("MenuItem.background", new Color(126, 126, 131));
-            UIManager.put("MenuItem.foreground", Color.GREEN);
-            UIManager.put("MenuItem.selectionBackground", new Color(65, 140, 124));
-            UIManager.put("MenuItem.selectionForeground", Color.CYAN);
+            // Цвета меню
+            UIManager.put("MenuItem.background", new Color(80, 80, 85));
+            UIManager.put("MenuItem.foreground", Color.WHITE);
+            UIManager.put("MenuItem.selectionBackground", new Color(96, 208, 191));
+            UIManager.put("MenuItem.selectionForeground", Color.BLACK);
 
+            // Для выпадающих меню
+            UIManager.put("PopupMenu.background", new Color(80, 80, 85));
+            UIManager.put("PopupMenu.border", BorderFactory.createLineBorder(new Color(60, 63, 65)));
 
-            UIManager.put("PopupMenu.background", new Color(126, 126, 131));
-            UIManager.put("PopupMenu.border", BorderFactory.createLineBorder(new Color(80, 80, 80)));
+            // Панель меню
+            UIManager.put("MenuBar.background", new Color(70, 70, 75));
+            UIManager.put("Menu.background", new Color(70, 70, 75));
+            UIManager.put("Menu.foreground", Color.WHITE);
+            UIManager.put("Menu.selectionBackground", new Color(96, 208, 191));
 
-
-            UIManager.put("MenuBar.background", new Color(126, 126, 131));
-            UIManager.put("Menu.background", new Color(126, 126, 131));
-            UIManager.put("Menu.selectionBackground", new Color(65, 140, 124));
+            // Вкладки
+            UIManager.put("TabbedPane.background", new Color(60, 63, 65));
+            UIManager.put("TabbedPane.foreground", Color.WHITE);
+            UIManager.put("TabbedPane.selected", new Color(96, 208, 191));
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -68,6 +77,9 @@ public class EditorMain extends JFrame implements ActionListener, TextAppender {
     private void setupFrame() {
         setJMenuBar(editorMenuBar.getMenuBar());
         add(tabManager.getTabbedPane());
+
+        getContentPane().setBackground(new Color(60, 63, 65));
+
         setSize(800, 600);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setVisible(true);

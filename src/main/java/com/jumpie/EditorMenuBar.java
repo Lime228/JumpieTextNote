@@ -77,10 +77,10 @@ public class EditorMenuBar {
     }
 
     private void styleButton(JButton button) {
-        button.setBackground(new Color(126, 126, 131));
-        button.setForeground(Color.WHITE);
+        button.setBackground(new Color(80, 80, 85));
+        button.setForeground(new Color(189, 189, 201));
         button.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(126, 126, 131), 1),
+                BorderFactory.createLineBorder(new Color(100, 100, 105), 1),
                 BorderFactory.createEmptyBorder(5, 12, 5, 12)
         ));
         button.setFocusPainted(false);
@@ -88,38 +88,43 @@ public class EditorMenuBar {
 
         button.addMouseListener(new MouseAdapter() {
             public void mouseEntered(MouseEvent e) {
-                button.setBackground(new Color(65, 140, 124));
+                button.setBackground(new Color(96, 208, 191));
+                button.setForeground(Color.BLACK);
             }
             public void mouseExited(MouseEvent e) {
-                button.setBackground(new Color(126, 126, 131));
+                button.setBackground(new Color(80, 80, 85));
+                button.setForeground(Color.WHITE);
             }
         });
     }
-
     private void styleMenuItem(JMenuItem menuItem) {
-        menuItem.setBackground(new Color(126, 126, 131));
         menuItem.setForeground(Color.WHITE);
-        menuItem.setBorder(BorderFactory.createEmptyBorder(5, 12, 5, 12));
+        menuItem.setBackground(new Color(80, 80, 85)); // Серый фон
         menuItem.setFont(new Font("Segoe UI", Font.PLAIN, 12));
 
         menuItem.setContentAreaFilled(false);
         menuItem.setOpaque(true);
-        menuItem.setFocusPainted(false);
+        menuItem.setBorder(BorderFactory.createEmptyBorder(5, 15, 5, 15));
 
         menuItem.addMouseListener(new MouseAdapter() {
             public void mouseEntered(MouseEvent e) {
-                menuItem.setBackground(new Color(65, 140, 124));
-                menuItem.setForeground(Color.WHITE);
+                menuItem.setBackground(new Color(96, 208, 191));
+                menuItem.setForeground(Color.BLACK);
             }
             public void mouseExited(MouseEvent e) {
-                menuItem.setBackground(new Color(126, 126, 131));
+                menuItem.setBackground(new Color(80, 80, 85));
                 menuItem.setForeground(Color.WHITE);
             }
         });
 
         if (menuItem instanceof JMenu) {
-            ((JMenu)menuItem).getPopupMenu().setBorder(
-                    BorderFactory.createLineBorder(new Color(80, 80, 80))
+            JMenu menu = (JMenu)menuItem;
+            menu.setBackground(new Color(80, 80, 85));
+            menu.setForeground(Color.WHITE);
+
+            menu.getPopupMenu().setBackground(new Color(80, 80, 85));
+            menu.getPopupMenu().setBorder(
+                    BorderFactory.createLineBorder(new Color(60, 63, 65), 1)
             );
         }
     }

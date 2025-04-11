@@ -46,10 +46,7 @@ public class TabManager {
                 g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
                         RenderingHints.VALUE_ANTIALIAS_ON);
 
-                GradientPaint gp = new GradientPaint(
-                        0, 0, new Color(96, 208, 191),
-                        0, getHeight(), new Color(96, 208, 191));
-                g2d.setPaint(gp);
+                g2d.setColor(new Color(45, 45, 50));
                 g2d.fillRect(0, 0, getWidth(), getHeight());
 
                 super.paintComponent(g);
@@ -57,10 +54,10 @@ public class TabManager {
         };
 
         textArea.setFont(new Font("Consolas", Font.PLAIN, 14));
-        textArea.setForeground(new Color(255, 255, 255));
-        textArea.setCaretColor(Color.gray);
+        textArea.setForeground(Color.WHITE);
+        textArea.setCaretColor(Color.WHITE);
         textArea.setSelectionColor(new Color(96, 208, 191));
-        textArea.setSelectedTextColor(Color.black);
+        textArea.setSelectedTextColor(Color.BLACK);
         textArea.setBorder(BorderFactory.createEmptyBorder(10, 15, 10, 15));
         return textArea;
     }
@@ -98,22 +95,6 @@ public class TabManager {
             }
         }
     }
-
-//    private JPanel createTabHeader(String title, JScrollPane scrollPane) {
-//        JPanel tabPanel = new JPanel(new BorderLayout());
-//        tabPanel.setOpaque(false);
-//
-//        JLabel tabLabel = new JLabel(title);
-//        JButton closeButton = createCloseButton(scrollPane);
-//
-//        JPanel tabHeader = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
-//        tabHeader.setOpaque(false);
-//        tabHeader.add(tabLabel);
-//        tabHeader.add(closeButton);
-//
-//        tabPanel.add(tabHeader, BorderLayout.CENTER);
-//        return tabPanel;
-//    }
 
     private JPanel createTabHeader(String title, JScrollPane scrollPane) {
         JPanel tabPanel = new JPanel(new BorderLayout());
