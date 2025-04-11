@@ -30,7 +30,7 @@ public class EditorMain extends JFrame implements ActionListener, TextAppender {
         fileManager = new FileManager(this, tabManager);
         voiceService = new VoiceRecognitionService(this, "voicemodels/voskSmallRu0.22");
         editorMenuBar = new EditorMenuBar(this);
-        voiceButton = editorMenuBar.getVoiceButton(); // Сохраняем ссылку на кнопку
+        voiceButton = editorMenuBar.getVoiceButton();
 
         voiceService.setOnStateChangeListener(this::updateVoiceButtonState);
         voiceButton.addActionListener(e -> voiceService.toggleRecognition(this));
@@ -72,15 +72,42 @@ public class EditorMain extends JFrame implements ActionListener, TextAppender {
     public void actionPerformed(ActionEvent e) {
         String command = e.getActionCommand().toLowerCase();
         switch (command) {
-            case "new tab": tabManager.addNewTab(); break;
-            case "open": fileManager.openFile(); break;
-            case "save": fileManager.saveFile(false); break;
-            case "save as": fileManager.saveFile(true); break;
-            case "close tab": tabManager.closeCurrentTab(); break;
-            case "cut": tabManager.getCurrentTextArea().cut(); break;
-            case "copy": tabManager.getCurrentTextArea().copy(); break;
-            case "paste": tabManager.getCurrentTextArea().paste(); break;
-            case "print": printTextArea(); break;
+            case "new tab":
+                tabManager.addNewTab();
+                break;
+            case "open":
+                fileManager.openFile();
+                break;
+            case "save":
+                fileManager.saveFile(false);
+                break;
+            case "save as":
+                fileManager.saveFile(true);
+                break;
+            case "close tab":
+                tabManager.closeCurrentTab();
+                break;
+            case "cut":
+                tabManager.getCurrentTextArea().cut();
+                break;
+            case "copy":
+                tabManager.getCurrentTextArea().copy();
+                break;
+            case "paste":
+                tabManager.getCurrentTextArea().paste();
+                break;
+            case "print":
+                printTextArea();
+                break;
+            case "zoom in", "+":
+                tabManager.zoomIn();
+                break;
+            case "zoom out", "-":
+                tabManager.zoomOut();
+                break;
+            case "reset zoom", "100%":
+                tabManager.resetZoom();
+                break;
         }
     }
 

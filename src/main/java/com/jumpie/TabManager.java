@@ -5,6 +5,10 @@ import java.awt.*;
 
 public class TabManager {
     private JTabbedPane tabbedPane;
+    private float currentZoom = 1.0f;
+    private static final float MIN_ZOOM = 0.5f;
+    private static final float MAX_ZOOM = 5.0f;
+    private static final float ZOOM_STEP = 0.5f;
 
     public TabManager() {
         tabbedPane = new JTabbedPane();
@@ -16,6 +20,16 @@ public class TabManager {
 
     public void addNewTab() {
         JTextArea textArea = new JTextArea();
+//        textArea.addMouseWheelListener(e -> { работает криво
+//            if (e.isControlDown()) {
+//                if (e.getWheelRotation() < 0) {
+//                    zoomIn();
+//                } else {
+//                    zoomOut();
+//                }
+//            }
+//        });
+
         JScrollPane scrollPane = new JScrollPane(textArea);
 
         JPanel tabPanel = createTabHeader("New Document " + (tabbedPane.getTabCount() + 1), scrollPane);
@@ -88,5 +102,39 @@ public class TabManager {
         });
 
         return closeButton;
+    }
+
+    public void zoomIn() {
+        float newZoom = currentZoom + ZOOM_STEP;
+        newZoom = Math.min(Math.round(newZoom * 10) / 10.0f, MAX_ZOOM);
+        changeZoom(newZoom);
+    }
+
+    public void zoomOut() {
+        float newZoom = currentZoom - ZOOM_STEP;
+        newZoom = Math.max(Math.round(newZoom * 10) / 10.0f, MIN_ZOOM);
+        changeZoom(newZoom);
+    }
+
+    public void resetZoom() {
+        changeZoom(1.0f);
+    }
+
+    private void changeZoom(float newZoom) {
+        if (Math.abs(currentZoom - newZoom) > 0.01f) {
+            currentZoom = newZoom;
+            updateCurrentTabFont();
+        }
+    }
+
+    private void updateCurrentTabFont() {
+        JTextArea textArea = getCurrentTextArea();
+        if (textArea != null) {
+            Font currentFont = textArea.getFont();
+            float baseSize = 12;
+            float newSize = baseSize * currentZoom;
+            Font newFont = currentFont.deriveFont(newSize);
+            textArea.setFont(newFont);
+        }
     }
 }

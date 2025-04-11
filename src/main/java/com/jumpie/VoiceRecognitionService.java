@@ -1,7 +1,9 @@
 package com.jumpie;
 
 import javax.sound.sampled.*;
+
 import org.vosk.*;
+
 import javax.swing.*;
 import java.io.File;
 
