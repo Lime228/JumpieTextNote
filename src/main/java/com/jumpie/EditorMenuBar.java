@@ -1,15 +1,13 @@
 package com.jumpie;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.*;
 
 public class EditorMenuBar {
     private JMenuBar menuBar;
     private ActionListener actionListener;
     private JButton voiceButton;
-    private JButton zoomInButton;
-    private JButton zoomOutButton;
-    private JButton zoomResetButton;
 
     public EditorMenuBar(ActionListener listener) {
         this.actionListener = listener;
@@ -21,6 +19,7 @@ public class EditorMenuBar {
 
     private void createFileMenu() {
         JMenu fileMenu = new JMenu("File");
+        styleMenuItem(fileMenu);
         addMenuItem(fileMenu, "New Tab");
         addMenuItem(fileMenu, "Open");
         addMenuItem(fileMenu, "Save");
@@ -32,6 +31,7 @@ public class EditorMenuBar {
 
     private void createEditMenu() {
         JMenu editMenu = new JMenu("Edit");
+        styleMenuItem(editMenu);
         addMenuItem(editMenu, "Cut");
         addMenuItem(editMenu, "Copy");
         addMenuItem(editMenu, "Paste");
@@ -43,7 +43,7 @@ public class EditorMenuBar {
     }
 
     private void createToolButtons() {
-        voiceButton = new JButton("🎤");
+        voiceButton = new JButton("Record");
         voiceButton.setToolTipText("Start/Stop voice input");
 
         JButton zoomInButton = new JButton("+");
@@ -58,17 +58,70 @@ public class EditorMenuBar {
         zoomResetButton.setToolTipText("Reset Zoom");
         zoomResetButton.addActionListener(actionListener);
 
+        styleButton(voiceButton);
         menuBar.add(voiceButton);
         menuBar.add(Box.createHorizontalStrut(5));
+        styleButton(zoomInButton);
         menuBar.add(zoomInButton);
+        styleButton(zoomOutButton);
         menuBar.add(zoomOutButton);
+        styleButton(zoomResetButton);
         menuBar.add(zoomResetButton);
     }
 
     private void addMenuItem(JMenu menu, String text) {
         JMenuItem item = new JMenuItem(text);
+        styleMenuItem(item);
         item.addActionListener(actionListener);
         menu.add(item);
+    }
+
+    private void styleButton(JButton button) {
+        button.setBackground(new Color(126, 126, 131));
+        button.setForeground(Color.WHITE);
+        button.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(126, 126, 131), 1),
+                BorderFactory.createEmptyBorder(5, 12, 5, 12)
+        ));
+        button.setFocusPainted(false);
+        button.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+
+        button.addMouseListener(new MouseAdapter() {
+            public void mouseEntered(MouseEvent e) {
+                button.setBackground(new Color(65, 140, 124));
+            }
+            public void mouseExited(MouseEvent e) {
+                button.setBackground(new Color(126, 126, 131));
+            }
+        });
+    }
+
+    private void styleMenuItem(JMenuItem menuItem) {
+        menuItem.setBackground(new Color(126, 126, 131));
+        menuItem.setForeground(Color.WHITE);
+        menuItem.setBorder(BorderFactory.createEmptyBorder(5, 12, 5, 12));
+        menuItem.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+
+        menuItem.setContentAreaFilled(false);
+        menuItem.setOpaque(true);
+        menuItem.setFocusPainted(false);
+
+        menuItem.addMouseListener(new MouseAdapter() {
+            public void mouseEntered(MouseEvent e) {
+                menuItem.setBackground(new Color(65, 140, 124));
+                menuItem.setForeground(Color.WHITE);
+            }
+            public void mouseExited(MouseEvent e) {
+                menuItem.setBackground(new Color(126, 126, 131));
+                menuItem.setForeground(Color.WHITE);
+            }
+        });
+
+        if (menuItem instanceof JMenu) {
+            ((JMenu)menuItem).getPopupMenu().setBorder(
+                    BorderFactory.createLineBorder(new Color(80, 80, 80))
+            );
+        }
     }
 
     public JMenuBar getMenuBar() {
@@ -77,17 +130,5 @@ public class EditorMenuBar {
 
     public JButton getVoiceButton() {
         return voiceButton;
-    }
-
-    public JButton getZoomInButton() {
-        return zoomInButton;
-    }
-
-    public JButton getZoomOutButton() {
-        return zoomOutButton;
-    }
-
-    public JButton getZoomResetButton() {
-        return zoomResetButton;
     }
 }

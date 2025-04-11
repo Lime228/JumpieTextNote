@@ -1,6 +1,7 @@
 package com.jumpie;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.*;
 
 public class EditorMain extends JFrame implements ActionListener, TextAppender {
@@ -11,7 +12,7 @@ public class EditorMain extends JFrame implements ActionListener, TextAppender {
     private JButton voiceButton;
 
     public EditorMain() {
-        super("Editor with Tabs");
+        super("Jumpie TextNote");
         setupLookAndFeel();
         initializeComponents();
         setupFrame();
@@ -19,7 +20,25 @@ public class EditorMain extends JFrame implements ActionListener, TextAppender {
 
     private void setupLookAndFeel() {
         try {
-            UIManager.setLookAndFeel("javax.swing.plaf.metal.MetalLookAndFeel");
+            UIManager.setLookAndFeel("com.formdev.flatlaf.FlatDarkLaf");
+
+            UIManager.put("Panel.background", new Color(80, 80, 80));
+            UIManager.put("Viewport.background", new Color(80, 80, 80));
+
+            UIManager.put("MenuItem.background", new Color(126, 126, 131));
+            UIManager.put("MenuItem.foreground", Color.GREEN);
+            UIManager.put("MenuItem.selectionBackground", new Color(65, 140, 124));
+            UIManager.put("MenuItem.selectionForeground", Color.CYAN);
+
+
+            UIManager.put("PopupMenu.background", new Color(126, 126, 131));
+            UIManager.put("PopupMenu.border", BorderFactory.createLineBorder(new Color(80, 80, 80)));
+
+
+            UIManager.put("MenuBar.background", new Color(126, 126, 131));
+            UIManager.put("Menu.background", new Color(126, 126, 131));
+            UIManager.put("Menu.selectionBackground", new Color(65, 140, 124));
+
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -38,10 +57,10 @@ public class EditorMain extends JFrame implements ActionListener, TextAppender {
 
     private void updateVoiceButtonState() {
         if (voiceService.isListening()) {
-            voiceButton.setText("⏹");
+            voiceButton.setText("Stop");
             voiceButton.setToolTipText("Stop voice input");
         } else {
-            voiceButton.setText("🎤");
+            voiceButton.setText("Record");
             voiceButton.setToolTipText("Start voice input");
         }
     }
