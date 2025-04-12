@@ -5,8 +5,8 @@ import java.io.*;
 import javax.swing.text.JTextComponent;
 
 public class FileManager {
-    private TabManager tabManager;
-    private JFrame parentFrame;
+    private final TabManager tabManager;
+    private final JFrame parentFrame;
 
     public FileManager(JFrame frame, TabManager tabManager) {
         this.parentFrame = frame;
@@ -59,7 +59,7 @@ public class FileManager {
         }
     }
 
-    private void showError(String message) {
+    public void showError(String message) {
         JOptionPane.showMessageDialog(parentFrame, message);
     }
 }

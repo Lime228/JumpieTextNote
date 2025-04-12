@@ -5,7 +5,7 @@ import javax.swing.text.*;
 import java.awt.*;
 
 public class TabManager {
-    private JTabbedPane tabbedPane;
+    private final JTabbedPane tabbedPane;
     private float currentZoom = 1.0f;
     private static final float MIN_ZOOM = 0.5f;
     private static final float MAX_ZOOM = 5.0f;

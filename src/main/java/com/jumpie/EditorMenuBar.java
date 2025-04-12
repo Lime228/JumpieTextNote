@@ -5,8 +5,8 @@ import java.awt.*;
 import java.awt.event.*;
 
 public class EditorMenuBar {
-    private JMenuBar menuBar;
-    private ActionListener actionListener;
+    private final JMenuBar menuBar;
+    private final ActionListener actionListener;
     private JButton voiceButton;
 
     public EditorMenuBar(ActionListener listener) {
@@ -117,8 +117,7 @@ public class EditorMenuBar {
             }
         });
 
-        if (menuItem instanceof JMenu) {
-            JMenu menu = (JMenu)menuItem;
+        if (menuItem instanceof JMenu menu) {
             menu.setBackground(new Color(80, 80, 85));
             menu.setForeground(Color.WHITE);
 

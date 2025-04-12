@@ -9,9 +9,9 @@ public class VoiceRecognitionService {
     private Recognizer recognizer;
     private volatile TargetDataLine microphone;
     private volatile boolean isListening = false;
-    private JFrame parentFrame;
+    private final JFrame parentFrame;
     private Runnable onStateChange;
-    private AudioFormat format;
+    private final AudioFormat format;
 
     public VoiceRecognitionService(JFrame frame, String modelPath) {
         this.parentFrame = frame;
