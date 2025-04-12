@@ -1,8 +1,7 @@
 package com.jumpie;
 
 import javax.swing.*;
-import javax.swing.text.SimpleAttributeSet;
-import javax.swing.text.StyleConstants;
+import javax.swing.text.*;
 import java.awt.*;
 
 public class TabManager {
@@ -22,20 +21,17 @@ public class TabManager {
 
     public void addNewTab() {
         JTextPane textPane = createTextPane();
-//        textArea.addMouseWheelListener(e -> { работает криво
-//            if (e.isControlDown()) {
-//                if (e.getWheelRotation() < 0) {
-//                    zoomIn();
-//                } else {
-//                    zoomOut();
-//                }
-//            }
-//        });
-
         JScrollPane scrollPane = new JScrollPane(textPane);
 
         JPanel tabPanel = createTabHeader("New Document " + (tabbedPane.getTabCount() + 1), scrollPane);
 
+        SimpleAttributeSet attrs = new SimpleAttributeSet();
+        StyleConstants.setFontFamily(attrs, "Consolas");
+        StyleConstants.setFontSize(attrs, 14); // Базовый размер при 100%
+        StyleConstants.setForeground(attrs, Color.WHITE);
+
+        textPane.setParagraphAttributes(attrs, true);
+        textPane.getDocument().putProperty("baseZoom", 1.0f);
         tabbedPane.addTab(null, scrollPane);
         tabbedPane.setTabComponentAt(tabbedPane.getTabCount() - 1, tabPanel);
         tabbedPane.setSelectedIndex(tabbedPane.getTabCount() - 1);
@@ -110,36 +106,63 @@ public class TabManager {
     }
 
     public void zoomIn() {
-        float newZoom = currentZoom + ZOOM_STEP;
-        newZoom = Math.min(Math.round(newZoom * 10) / 10.0f, MAX_ZOOM);
-        changeZoom(newZoom);
+        setZoom(currentZoom + ZOOM_STEP);
     }
 
     public void zoomOut() {
-        float newZoom = currentZoom - ZOOM_STEP;
-        newZoom = Math.max(Math.round(newZoom * 10) / 10.0f, MIN_ZOOM);
-        changeZoom(newZoom);
+        setZoom(currentZoom - ZOOM_STEP);
     }
 
     public void resetZoom() {
-        changeZoom(1.0f);
+        // (1.0f = 100%)
+        float resetFactor = 1.0f / currentZoom;
+        currentZoom = 1.0f;
+        scaleDocument(resetFactor);
     }
 
-    private void changeZoom(float newZoom) {
+    public void setZoom(float newZoom) {
+        newZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, newZoom));
         if (Math.abs(currentZoom - newZoom) > 0.01f) {
+            float zoomFactor = newZoom / currentZoom;
             currentZoom = newZoom;
-            updateCurrentTabFont();
+            scaleDocument(zoomFactor);
         }
     }
 
-    private void updateCurrentTabFont() {
+    private void scaleDocument(float zoomFactor) {
         JTextPane textPane = getCurrentTextComponent();
         if (textPane != null) {
-            Font currentFont = textPane.getFont();
-            float baseSize = 12;
-            float newSize = baseSize * currentZoom;
-            Font newFont = currentFont.deriveFont(newSize);
-            textPane.setFont(newFont);
+            try {
+                StyledDocument doc = textPane.getStyledDocument();
+                int length = doc.getLength();
+
+                int caretPos = textPane.getCaretPosition();
+                int selStart = textPane.getSelectionStart();
+                int selEnd = textPane.getSelectionEnd();
+
+                for (int i = 0; i < length; ) {
+                    Element elem = doc.getCharacterElement(i);
+                    AttributeSet attrs = elem.getAttributes();
+                    int end = elem.getEndOffset();
+
+                    SimpleAttributeSet newAttrs = new SimpleAttributeSet();
+                    newAttrs.addAttributes(attrs);
+
+                    int originalSize = StyleConstants.getFontSize(attrs);
+                    int newSize = Math.max(1, Math.round(originalSize * zoomFactor));
+                    StyleConstants.setFontSize(newAttrs, newSize);
+
+                    doc.setCharacterAttributes(i, end - i, newAttrs, false);
+
+                    i = end;
+                }
+
+                textPane.setCaretPosition(caretPos);
+                textPane.select(selStart, selEnd);
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
     }
 
