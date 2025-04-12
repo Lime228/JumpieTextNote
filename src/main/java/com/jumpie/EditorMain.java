@@ -1,6 +1,10 @@
 package com.jumpie;
 
 import javax.swing.*;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.SimpleAttributeSet;
+import javax.swing.text.StyleConstants;
+import javax.swing.text.StyledDocument;
 import java.awt.*;
 import java.awt.event.*;
 
@@ -87,9 +91,15 @@ public class EditorMain extends JFrame implements ActionListener, TextAppender {
 
     @Override
     public void appendText(String text) {
-        JTextArea textArea = tabManager.getCurrentTextArea();
-        if (textArea != null) {
-            textArea.append(text);
+        JTextPane textPane = tabManager.getCurrentTextComponent();
+        if (textPane != null) {
+            try {
+                StyledDocument doc = textPane.getStyledDocument();
+                doc.insertString(doc.getLength(), text, null); // null = текущий стиль
+                textPane.setCaretPosition(doc.getLength());
+            } catch (BadLocationException e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -119,13 +129,13 @@ public class EditorMain extends JFrame implements ActionListener, TextAppender {
                 tabManager.closeCurrentTab();
                 break;
             case "cut":
-                tabManager.getCurrentTextArea().cut();
+                tabManager.getCurrentTextComponent().cut();
                 break;
             case "copy":
-                tabManager.getCurrentTextArea().copy();
+                tabManager.getCurrentTextComponent().copy();
                 break;
             case "paste":
-                tabManager.getCurrentTextArea().paste();
+                tabManager.getCurrentTextComponent().paste();
                 break;
             case "print":
                 printTextArea();
@@ -144,9 +154,52 @@ public class EditorMain extends JFrame implements ActionListener, TextAppender {
 
     private void printTextArea() {
         try {
-            tabManager.getCurrentTextArea().print();
+            tabManager.getCurrentTextComponent().print();
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, ex.getMessage());
+        }
+    }
+
+    public void changeFontFamily(String fontFamily) {
+        JTextPane textPane = (JTextPane) tabManager.getCurrentTextComponent();
+        if (textPane != null) {
+            StyledDocument doc = textPane.getStyledDocument();
+            SimpleAttributeSet attrs = new SimpleAttributeSet();
+            StyleConstants.setFontFamily(attrs, fontFamily);
+            doc.setCharacterAttributes(textPane.getSelectionStart(),
+                    textPane.getSelectionEnd() - textPane.getSelectionStart(),
+                    attrs, false);
+        }
+    }
+
+    public void changeFontSize(int size) {
+        JTextPane textPane = (JTextPane) tabManager.getCurrentTextComponent();
+        if (textPane != null) {
+            StyledDocument doc = textPane.getStyledDocument();
+            SimpleAttributeSet attrs = new SimpleAttributeSet();
+            StyleConstants.setFontSize(attrs, size);
+            doc.setCharacterAttributes(textPane.getSelectionStart(),
+                    textPane.getSelectionEnd() - textPane.getSelectionStart(),
+                    attrs, false);
+        }
+    }
+
+    public void toggleFontStyle(int style) {
+        JTextPane textPane = (JTextPane) tabManager.getCurrentTextComponent();
+        if (textPane != null) {
+            StyledDocument doc = textPane.getStyledDocument();
+            SimpleAttributeSet attrs = new SimpleAttributeSet();
+
+            // Получаем текущий стиль
+            Font currentFont = textPane.getFont();
+            int newStyle = currentFont.getStyle() ^ style; // XOR для переключения
+
+            StyleConstants.setBold(attrs, (newStyle & Font.BOLD) != 0);
+            StyleConstants.setItalic(attrs, (newStyle & Font.ITALIC) != 0);
+
+            doc.setCharacterAttributes(textPane.getSelectionStart(),
+                    textPane.getSelectionEnd() - textPane.getSelectionStart(),
+                    attrs, false);
         }
     }
 

@@ -1,6 +1,9 @@
 package com.jumpie;
 
 import javax.swing.*;
+import javax.swing.text.SimpleAttributeSet;
+import javax.swing.text.StyleConstants;
+import javax.swing.text.StyledDocument;
 import java.awt.*;
 import java.awt.event.*;
 
@@ -136,4 +139,68 @@ public class EditorMenuBar {
     public JButton getVoiceButton() {
         return voiceButton;
     }
+
+    private void createFormatMenu() {
+        JMenu formatMenu = new JMenu("Format");
+        styleMenuItem(formatMenu);
+
+        // Выбор шрифта
+        JMenu fontMenu = new JMenu("Font");
+        String[] fonts = GraphicsEnvironment.getLocalGraphicsEnvironment()
+                .getAvailableFontFamilyNames();
+
+        for (String font : fonts) {
+            JMenuItem fontItem = new JMenuItem(font);
+            fontItem.addActionListener(e -> changeFontFamily(font));
+            styleMenuItem(fontItem);
+            fontMenu.add(fontItem);
+        }
+
+        // Размер шрифта
+        JMenu sizeMenu = new JMenu("Size");
+        int[] sizes = {8, 10, 12, 14, 16, 18, 20, 24, 28, 32};
+        for (int size : sizes) {
+            JMenuItem sizeItem = new JMenuItem(String.valueOf(size));
+            sizeItem.addActionListener(e -> changeFontSize(size));
+            styleMenuItem(sizeItem);
+            sizeMenu.add(sizeItem);
+        }
+
+        // Стиль текста
+        JMenuItem boldItem = new JMenuItem("Bold");
+        boldItem.addActionListener(e -> toggleFontStyle(Font.BOLD));
+
+        JMenuItem italicItem = new JMenuItem("Italic");
+        italicItem.addActionListener(e -> toggleFontStyle(Font.ITALIC));
+
+        formatMenu.add(fontMenu);
+        formatMenu.add(sizeMenu);
+        formatMenu.addSeparator();
+        formatMenu.add(boldItem);
+        formatMenu.add(italicItem);
+
+        menuBar.add(formatMenu);
+    }
+
+    private void changeFontFamily(String fontFamily) {
+        EditorMain editor = (EditorMain) SwingUtilities.getWindowAncestor(menuBar);
+        if (editor != null) {
+            editor.changeFontFamily(fontFamily);
+        }
+    }
+
+    private void changeFontSize(int size) {
+        EditorMain editor = (EditorMain) SwingUtilities.getWindowAncestor(menuBar);
+        if (editor != null) {
+            editor.changeFontSize(size);
+        }
+    }
+
+    private void toggleFontStyle(int style) {
+        EditorMain editor = (EditorMain) SwingUtilities.getWindowAncestor(menuBar);
+        if (editor != null) {
+            editor.toggleFontStyle(style);
+        }
+    }
+
 }

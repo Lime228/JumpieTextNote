@@ -19,7 +19,7 @@ public class FileManager {
             File file = fileChooser.getSelectedFile();
             tabManager.addNewTab();
 
-            JTextArea textArea = tabManager.getCurrentTextArea();
+            JTextPane textArea = tabManager.getCurrentTextComponent();
             if (textArea == null) return;
 
             try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
@@ -33,7 +33,7 @@ public class FileManager {
     }
 
     public void saveFile(boolean saveAs) {
-        JTextArea textArea = tabManager.getCurrentTextArea();
+        JTextPane textArea = tabManager.getCurrentTextComponent();
         if (textArea == null) return;
 
         File currentFile = (File) textArea.getClientProperty("file");

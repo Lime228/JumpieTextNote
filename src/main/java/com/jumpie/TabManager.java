@@ -1,6 +1,8 @@
 package com.jumpie;
 
 import javax.swing.*;
+import javax.swing.text.SimpleAttributeSet;
+import javax.swing.text.StyleConstants;
 import java.awt.*;
 
 public class TabManager {
@@ -19,7 +21,7 @@ public class TabManager {
     }
 
     public void addNewTab() {
-        JTextArea textArea = getjTextArea();
+        JTextPane textPane = createTextPane();
 //        textArea.addMouseWheelListener(e -> { работает криво
 //            if (e.isControlDown()) {
 //                if (e.getWheelRotation() < 0) {
@@ -30,7 +32,7 @@ public class TabManager {
 //            }
 //        });
 
-        JScrollPane scrollPane = new JScrollPane(textArea);
+        JScrollPane scrollPane = new JScrollPane(textPane);
 
         JPanel tabPanel = createTabHeader("New Document " + (tabbedPane.getTabCount() + 1), scrollPane);
 
@@ -39,28 +41,28 @@ public class TabManager {
         tabbedPane.setSelectedIndex(tabbedPane.getTabCount() - 1);
     }
 
-    private static JTextArea getjTextArea() {
-        JTextArea textArea = new JTextArea() {
-            protected void paintComponent(Graphics g) {
-                Graphics2D g2d = (Graphics2D)g;
-                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
-                        RenderingHints.VALUE_ANTIALIAS_ON);
-
-                g2d.setColor(new Color(45, 45, 50));
-                g2d.fillRect(0, 0, getWidth(), getHeight());
-
-                super.paintComponent(g);
-            }
-        };
-
-        textArea.setFont(new Font("Consolas", Font.PLAIN, 14));
-        textArea.setForeground(Color.WHITE);
-        textArea.setCaretColor(Color.WHITE);
-        textArea.setSelectionColor(new Color(96, 208, 191));
-        textArea.setSelectedTextColor(Color.BLACK);
-        textArea.setBorder(BorderFactory.createEmptyBorder(10, 15, 10, 15));
-        return textArea;
-    }
+//    private static JTextArea getjTextArea() {
+//        JTextArea textArea = new JTextArea() {
+//            protected void paintComponent(Graphics g) {
+//                Graphics2D g2d = (Graphics2D)g;
+//                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+//                        RenderingHints.VALUE_ANTIALIAS_ON);
+//
+//                g2d.setColor(new Color(45, 45, 50));
+//                g2d.fillRect(0, 0, getWidth(), getHeight());
+//
+//                super.paintComponent(g);
+//            }
+//        };
+//
+//        textArea.setFont(new Font("Consolas", Font.PLAIN, 14));
+//        textArea.setForeground(Color.WHITE);
+//        textArea.setCaretColor(Color.WHITE);
+//        textArea.setSelectionColor(new Color(96, 208, 191));
+//        textArea.setSelectedTextColor(Color.BLACK);
+//        textArea.setBorder(BorderFactory.createEmptyBorder(10, 15, 10, 15));
+//        return textArea;
+//    }
 
     public void closeCurrentTab() {
         int index = tabbedPane.getSelectedIndex();
@@ -69,10 +71,10 @@ public class TabManager {
         }
     }
 
-    public JTextArea getCurrentTextArea() {
+    public JTextPane getCurrentTextComponent() {
         Component component = tabbedPane.getSelectedComponent();
         if (component instanceof JScrollPane) {
-            return (JTextArea) ((JScrollPane) component).getViewport().getView();
+            return (JTextPane) ((JScrollPane) component).getViewport().getView();
         }
         return null;
     }
@@ -154,13 +156,41 @@ public class TabManager {
     }
 
     private void updateCurrentTabFont() {
-        JTextArea textArea = getCurrentTextArea();
-        if (textArea != null) {
-            Font currentFont = textArea.getFont();
+        JTextPane textPane = getCurrentTextComponent();
+        if (textPane != null) {
+            Font currentFont = textPane.getFont();
             float baseSize = 12;
             float newSize = baseSize * currentZoom;
             Font newFont = currentFont.deriveFont(newSize);
-            textArea.setFont(newFont);
+            textPane.setFont(newFont);
         }
+    }
+
+    private static JTextPane createTextPane() {
+        JTextPane textPane = new JTextPane() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2d = (Graphics2D)g;
+                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+                        RenderingHints.VALUE_ANTIALIAS_ON);
+                g2d.setColor(new Color(45, 45, 50));
+                g2d.fillRect(0, 0, getWidth(), getHeight());
+                super.paintComponent(g);
+            }
+        };
+
+        // Настройки по умолчанию
+        SimpleAttributeSet attrs = new SimpleAttributeSet();
+        StyleConstants.setFontFamily(attrs, "Consolas");
+        StyleConstants.setFontSize(attrs, 14);
+        StyleConstants.setForeground(attrs, Color.WHITE);
+        textPane.setParagraphAttributes(attrs, true);
+
+        textPane.setCaretColor(Color.WHITE);
+        textPane.setSelectionColor(new Color(96, 208, 191));
+        textPane.setSelectedTextColor(Color.BLACK);
+        textPane.setBorder(BorderFactory.createEmptyBorder(10, 15, 10, 15));
+
+        return textPane;
     }
 }
