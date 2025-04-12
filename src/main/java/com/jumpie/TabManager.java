@@ -41,29 +41,6 @@ public class TabManager {
         tabbedPane.setSelectedIndex(tabbedPane.getTabCount() - 1);
     }
 
-//    private static JTextArea getjTextArea() {
-//        JTextArea textArea = new JTextArea() {
-//            protected void paintComponent(Graphics g) {
-//                Graphics2D g2d = (Graphics2D)g;
-//                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
-//                        RenderingHints.VALUE_ANTIALIAS_ON);
-//
-//                g2d.setColor(new Color(45, 45, 50));
-//                g2d.fillRect(0, 0, getWidth(), getHeight());
-//
-//                super.paintComponent(g);
-//            }
-//        };
-//
-//        textArea.setFont(new Font("Consolas", Font.PLAIN, 14));
-//        textArea.setForeground(Color.WHITE);
-//        textArea.setCaretColor(Color.WHITE);
-//        textArea.setSelectionColor(new Color(96, 208, 191));
-//        textArea.setSelectedTextColor(Color.BLACK);
-//        textArea.setBorder(BorderFactory.createEmptyBorder(10, 15, 10, 15));
-//        return textArea;
-//    }
-
     public void closeCurrentTab() {
         int index = tabbedPane.getSelectedIndex();
         if (index != -1) {

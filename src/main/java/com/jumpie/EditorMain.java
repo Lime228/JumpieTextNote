@@ -1,15 +1,12 @@
 package com.jumpie;
 
 import javax.swing.*;
-import javax.swing.text.BadLocationException;
-import javax.swing.text.SimpleAttributeSet;
-import javax.swing.text.StyleConstants;
-import javax.swing.text.StyledDocument;
+import javax.swing.text.*;
 import java.awt.*;
 import java.awt.event.*;
 
 public class EditorMain extends JFrame implements ActionListener, TextAppender {
-    private TabManager tabManager;
+    TabManager tabManager;
     private FileManager fileManager;
     private VoiceRecognitionService voiceService;
     private EditorMenuBar editorMenuBar;
@@ -80,9 +77,11 @@ public class EditorMain extends JFrame implements ActionListener, TextAppender {
 
     private void setupFrame() {
         setJMenuBar(editorMenuBar.getMenuBar());
+
+        add(createFontToolBar(), BorderLayout.NORTH);
         add(tabManager.getTabbedPane());
 
-        getContentPane().setBackground(new Color(60, 63, 65));
+        getContentPane().setBackground(new Color(85, 89, 93));
 
         setSize(800, 600);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -161,46 +160,115 @@ public class EditorMain extends JFrame implements ActionListener, TextAppender {
     }
 
     public void changeFontFamily(String fontFamily) {
-        JTextPane textPane = (JTextPane) tabManager.getCurrentTextComponent();
+        JTextPane textPane = tabManager.getCurrentTextComponent();
         if (textPane != null) {
             StyledDocument doc = textPane.getStyledDocument();
             SimpleAttributeSet attrs = new SimpleAttributeSet();
             StyleConstants.setFontFamily(attrs, fontFamily);
-            doc.setCharacterAttributes(textPane.getSelectionStart(),
-                    textPane.getSelectionEnd() - textPane.getSelectionStart(),
-                    attrs, false);
+
+            applyAttributesToSelection(textPane, doc, attrs);
         }
     }
 
     public void changeFontSize(int size) {
-        JTextPane textPane = (JTextPane) tabManager.getCurrentTextComponent();
+        JTextPane textPane = tabManager.getCurrentTextComponent();
         if (textPane != null) {
             StyledDocument doc = textPane.getStyledDocument();
             SimpleAttributeSet attrs = new SimpleAttributeSet();
             StyleConstants.setFontSize(attrs, size);
-            doc.setCharacterAttributes(textPane.getSelectionStart(),
-                    textPane.getSelectionEnd() - textPane.getSelectionStart(),
-                    attrs, false);
+
+            applyAttributesToSelection(textPane, doc, attrs);
         }
     }
 
     public void toggleFontStyle(int style) {
-        JTextPane textPane = (JTextPane) tabManager.getCurrentTextComponent();
+        JTextPane textPane = tabManager.getCurrentTextComponent();
         if (textPane != null) {
             StyledDocument doc = textPane.getStyledDocument();
             SimpleAttributeSet attrs = new SimpleAttributeSet();
 
-            // Получаем текущий стиль
-            Font currentFont = textPane.getFont();
-            int newStyle = currentFont.getStyle() ^ style; // XOR для переключения
+            int pos = textPane.getCaretPosition();
+            AttributeSet current = doc.getCharacterElement(pos > 0 ? pos - 1 : pos).getAttributes();
 
-            StyleConstants.setBold(attrs, (newStyle & Font.BOLD) != 0);
-            StyleConstants.setItalic(attrs, (newStyle & Font.ITALIC) != 0);
+            boolean isBold = StyleConstants.isBold(current) ^ (style == Font.BOLD);
+            boolean isItalic = StyleConstants.isItalic(current) ^ (style == Font.ITALIC);
 
-            doc.setCharacterAttributes(textPane.getSelectionStart(),
-                    textPane.getSelectionEnd() - textPane.getSelectionStart(),
-                    attrs, false);
+            StyleConstants.setBold(attrs, isBold);
+            StyleConstants.setItalic(attrs, isItalic);
+
+            applyAttributesToSelection(textPane, doc, attrs);
         }
+    }
+
+    private void applyAttributesToSelection(JTextPane textPane, StyledDocument doc, SimpleAttributeSet attrs) {
+        int start = textPane.getSelectionStart();
+        int end = textPane.getSelectionEnd();
+
+        try {
+            if (start == end) {
+                textPane.setCharacterAttributes(attrs, false);
+            } else {
+                doc.setCharacterAttributes(start, end - start, attrs, false);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private JToolBar createFontToolBar() {
+        JToolBar toolBar = new JToolBar();
+        toolBar.setFloatable(false);
+        toolBar.setBackground(new Color(80, 80, 85));
+
+        // Выбор шрифта
+        JComboBox<String> fontCombo = new JComboBox<>(
+                GraphicsEnvironment.getLocalGraphicsEnvironment()
+                        .getAvailableFontFamilyNames());
+        fontCombo.setSelectedItem("Consolas");
+        fontCombo.addActionListener(e ->
+                changeFontFamily((String)fontCombo.getSelectedItem()));
+
+        // Выбор размера
+        JComboBox<Integer> sizeCombo = new JComboBox<>(new Integer[]{8,10,12,14,16,18,20,24});
+        sizeCombo.setSelectedItem(14);
+        sizeCombo.addActionListener(e ->
+                changeFontSize((Integer)sizeCombo.getSelectedItem()));
+
+        // Кнопки стилей
+        JToggleButton boldBtn = createStyleButton("B", Font.BOLD);
+        JToggleButton italicBtn = createStyleButton("I", Font.ITALIC);
+
+        toolBar.add(new JLabel("Font: "));
+        toolBar.add(fontCombo);
+        toolBar.addSeparator();
+        toolBar.add(new JLabel("Size: "));
+        toolBar.add(sizeCombo);
+        toolBar.addSeparator();
+        toolBar.add(boldBtn);
+        toolBar.add(italicBtn);
+
+        return toolBar;
+    }
+
+    private JToggleButton createStyleButton(String text, int style) {
+        JToggleButton btn = new JToggleButton(text);
+        btn.setBackground(new Color(80, 80, 85));
+        btn.setForeground(Color.WHITE);
+        btn.setFocusPainted(false);
+        btn.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
+
+        btn.addActionListener(e -> toggleFontStyle(style));
+
+        btn.addMouseListener(new MouseAdapter() {
+            public void mouseEntered(MouseEvent e) {
+                btn.setBackground(new Color(96, 208, 191));
+            }
+            public void mouseExited(MouseEvent e) {
+                btn.setBackground(new Color(80, 80, 85));
+            }
+        });
+
+        return btn;
     }
 
     public static void main(String[] args) {
