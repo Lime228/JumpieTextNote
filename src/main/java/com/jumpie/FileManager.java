@@ -1,8 +1,8 @@
 package com.jumpie;
 
 import javax.swing.*;
-import java.io.*;
 import javax.swing.text.JTextComponent;
+import java.io.*;
 
 public class FileManager {
     private final TabManager tabManager;
@@ -14,52 +14,57 @@ public class FileManager {
     }
 
     public void openFile() {
-        JFileChooser fileChooser = new JFileChooser("f:");
-        if (fileChooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
-            File file = fileChooser.getSelectedFile();
-            tabManager.addNewTab();
+        File file = chooseFile(JFileChooser.OPEN_DIALOG);
+        if (file == null) return;
 
-            JTextPane textArea = tabManager.getCurrentTextComponent();
-            if (textArea == null) return;
+        tabManager.addNewTab();
+        JTextPane textPane = tabManager.getCurrentTextComponent();
+        if (textPane == null) return;
 
-            try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
-                textArea.read(reader, null);
-                textArea.putClientProperty("file", file);
-                tabManager.updateTabTitle(file.getName());
-            } catch (Exception ex) {
-                showError(ex.getMessage());
-            }
+        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+            textPane.read(reader, null);
+            textPane.putClientProperty("file", file);
+            tabManager.updateTabTitle(file.getName());
+        } catch (IOException ex) {
+            showError(ex.getMessage());
         }
     }
 
     public void saveFile(boolean saveAs) {
-        JTextPane textArea = tabManager.getCurrentTextComponent();
-        if (textArea == null) return;
+        JTextPane textPane = tabManager.getCurrentTextComponent();
+        if (textPane == null) return;
 
-        File currentFile = (File) textArea.getClientProperty("file");
+        File currentFile = (File) textPane.getClientProperty("file");
         if (!saveAs && currentFile != null) {
-            saveToFile(textArea, currentFile);
+            writeFile(textPane, currentFile);
             return;
         }
 
-        JFileChooser fileChooser = new JFileChooser("f:");
-        if (fileChooser.showSaveDialog(null) == JFileChooser.APPROVE_OPTION) {
-            File file = fileChooser.getSelectedFile();
-            saveToFile(textArea, file);
-            textArea.putClientProperty("file", file);
+        File file = chooseFile(JFileChooser.SAVE_DIALOG);
+        if (file != null) {
+            writeFile(textPane, file);
+            textPane.putClientProperty("file", file);
             tabManager.updateTabTitle(file.getName());
         }
     }
 
-    private void saveToFile(JTextComponent textComponent, File file) {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(file, false))) {
+    private File chooseFile(int dialogType) {
+        JFileChooser fileChooser = new JFileChooser("f:");
+        int result = (dialogType == JFileChooser.SAVE_DIALOG)
+                ? fileChooser.showSaveDialog(parentFrame)
+                : fileChooser.showOpenDialog(parentFrame);
+        return (result == JFileChooser.APPROVE_OPTION) ? fileChooser.getSelectedFile() : null;
+    }
+
+    private void writeFile(JTextComponent textComponent, File file) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
             textComponent.write(writer);
-        } catch (Exception ex) {
+        } catch (IOException ex) {
             showError(ex.getMessage());
         }
     }
 
     public void showError(String message) {
-        JOptionPane.showMessageDialog(parentFrame, message);
+        JOptionPane.showMessageDialog(parentFrame, message, "File Error", JOptionPane.ERROR_MESSAGE);
     }
 }

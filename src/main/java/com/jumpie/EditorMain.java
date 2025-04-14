@@ -6,7 +6,7 @@ import java.awt.*;
 import java.awt.event.*;
 
 public class EditorMain extends JFrame implements ActionListener, TextAppender {
-    TabManager tabManager;
+    private TabManager tabManager;
     private FileManager fileManager;
     private VoiceRecognitionService voiceService;
     private EditorMenuBar editorMenuBar;
@@ -23,32 +23,28 @@ public class EditorMain extends JFrame implements ActionListener, TextAppender {
         try {
             UIManager.setLookAndFeel("com.formdev.flatlaf.FlatDarkLaf");
 
-            // Основной серый фон
-            UIManager.put("Panel.background", new Color(60, 63, 65));
-            UIManager.put("Viewport.background", new Color(60, 63, 65));
-            UIManager.put("TextArea.background", new Color(45, 45, 50));
+            Color panelColor = new Color(60, 63, 65);
+            Color textAreaColor = new Color(45, 45, 50);
+            Color menuItemBg = new Color(80, 80, 85);
+            Color selectionBg = new Color(96, 208, 191);
+            Color menuBarBg = new Color(70, 70, 75);
 
-            // Цвета меню
-            UIManager.put("MenuItem.background", new Color(80, 80, 85));
+            UIManager.put("Panel.background", panelColor);
+            UIManager.put("Viewport.background", panelColor);
+            UIManager.put("TextArea.background", textAreaColor);
+            UIManager.put("MenuItem.background", menuItemBg);
             UIManager.put("MenuItem.foreground", Color.WHITE);
-            UIManager.put("MenuItem.selectionBackground", new Color(96, 208, 191));
+            UIManager.put("MenuItem.selectionBackground", selectionBg);
             UIManager.put("MenuItem.selectionForeground", Color.BLACK);
-
-            // Для выпадающих меню
-            UIManager.put("PopupMenu.background", new Color(80, 80, 85));
-            UIManager.put("PopupMenu.border", BorderFactory.createLineBorder(new Color(60, 63, 65)));
-
-            // Панель меню
-            UIManager.put("MenuBar.background", new Color(70, 70, 75));
-            UIManager.put("Menu.background", new Color(70, 70, 75));
+            UIManager.put("PopupMenu.background", menuItemBg);
+            UIManager.put("PopupMenu.border", BorderFactory.createLineBorder(panelColor));
+            UIManager.put("MenuBar.background", menuBarBg);
+            UIManager.put("Menu.background", menuBarBg);
             UIManager.put("Menu.foreground", Color.WHITE);
-            UIManager.put("Menu.selectionBackground", new Color(96, 208, 191));
-
-            // Вкладки
-            UIManager.put("TabbedPane.background", new Color(60, 63, 65));
+            UIManager.put("Menu.selectionBackground", selectionBg);
+            UIManager.put("TabbedPane.background", panelColor);
             UIManager.put("TabbedPane.foreground", Color.WHITE);
-            UIManager.put("TabbedPane.selected", new Color(96, 208, 191));
-
+            UIManager.put("TabbedPane.selected", selectionBg);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -65,19 +61,8 @@ public class EditorMain extends JFrame implements ActionListener, TextAppender {
         voiceButton.addActionListener(e -> voiceService.toggleRecognition(this));
     }
 
-    private void updateVoiceButtonState() {
-        if (voiceService.isListening()) {
-            voiceButton.setText("Stop");
-            voiceButton.setToolTipText("Stop voice input");
-        } else {
-            voiceButton.setText("Record");
-            voiceButton.setToolTipText("Start voice input");
-        }
-    }
-
     private void setupFrame() {
         setJMenuBar(editorMenuBar.getMenuBar());
-
         add(createFontToolBar(), BorderLayout.NORTH);
         add(tabManager.getTabbedPane());
 
@@ -88,13 +73,18 @@ public class EditorMain extends JFrame implements ActionListener, TextAppender {
         setVisible(true);
     }
 
+    private void updateVoiceButtonState() {
+        voiceButton.setText(voiceService.isListening() ? "Stop" : "Record");
+        voiceButton.setToolTipText(voiceService.isListening() ? "Stop voice input" : "Start voice input");
+    }
+
     @Override
     public void appendText(String text) {
         JTextPane textPane = tabManager.getCurrentTextComponent();
         if (textPane != null) {
             try {
                 StyledDocument doc = textPane.getStyledDocument();
-                doc.insertString(doc.getLength(), text, null); // null = текущий стиль
+                doc.insertString(doc.getLength(), text, null);
                 textPane.setCaretPosition(doc.getLength());
             } catch (BadLocationException e) {
                 e.printStackTrace();
@@ -112,42 +102,18 @@ public class EditorMain extends JFrame implements ActionListener, TextAppender {
     public void actionPerformed(ActionEvent e) {
         String command = e.getActionCommand().toLowerCase();
         switch (command) {
-            case "new tab":
-                tabManager.addNewTab();
-                break;
-            case "open":
-                fileManager.openFile();
-                break;
-            case "save":
-                fileManager.saveFile(false);
-                break;
-            case "save as":
-                fileManager.saveFile(true);
-                break;
-            case "close tab":
-                tabManager.closeCurrentTab();
-                break;
-            case "cut":
-                tabManager.getCurrentTextComponent().cut();
-                break;
-            case "copy":
-                tabManager.getCurrentTextComponent().copy();
-                break;
-            case "paste":
-                tabManager.getCurrentTextComponent().paste();
-                break;
-            case "print":
-                printTextArea();
-                break;
-            case "zoom in", "+":
-                tabManager.zoomIn();
-                break;
-            case "zoom out", "-":
-                tabManager.zoomOut();
-                break;
-            case "reset zoom", "100%":
-                tabManager.resetZoom();
-                break;
+            case "new tab" -> tabManager.addNewTab();
+            case "open" -> fileManager.openFile();
+            case "save" -> fileManager.saveFile(false);
+            case "save as" -> fileManager.saveFile(true);
+            case "close tab" -> tabManager.closeCurrentTab();
+            case "cut" -> tabManager.getCurrentTextComponent().cut();
+            case "copy" -> tabManager.getCurrentTextComponent().copy();
+            case "paste" -> tabManager.getCurrentTextComponent().paste();
+            case "print" -> printTextArea();
+            case "zoom in", "+" -> tabManager.zoomIn();
+            case "zoom out", "-" -> tabManager.zoomOut();
+            case "reset zoom", "100%" -> tabManager.resetZoom();
         }
     }
 
@@ -160,25 +126,11 @@ public class EditorMain extends JFrame implements ActionListener, TextAppender {
     }
 
     public void changeFontFamily(String fontFamily) {
-        JTextPane textPane = tabManager.getCurrentTextComponent();
-        if (textPane != null) {
-            StyledDocument doc = textPane.getStyledDocument();
-            SimpleAttributeSet attrs = new SimpleAttributeSet();
-            StyleConstants.setFontFamily(attrs, fontFamily);
-
-            applyAttributesToSelection(textPane, doc, attrs);
-        }
+        applyFontAttribute(attr -> StyleConstants.setFontFamily(attr, fontFamily));
     }
 
     public void changeFontSize(int size) {
-        JTextPane textPane = tabManager.getCurrentTextComponent();
-        if (textPane != null) {
-            StyledDocument doc = textPane.getStyledDocument();
-            SimpleAttributeSet attrs = new SimpleAttributeSet();
-            StyleConstants.setFontSize(attrs, size);
-
-            applyAttributesToSelection(textPane, doc, attrs);
-        }
+        applyFontAttribute(attr -> StyleConstants.setFontSize(attr, size));
     }
 
     public void toggleFontStyle(int style) {
@@ -186,16 +138,24 @@ public class EditorMain extends JFrame implements ActionListener, TextAppender {
         if (textPane != null) {
             StyledDocument doc = textPane.getStyledDocument();
             SimpleAttributeSet attrs = new SimpleAttributeSet();
-
             int pos = textPane.getCaretPosition();
-            AttributeSet current = doc.getCharacterElement(pos > 0 ? pos - 1 : pos).getAttributes();
+            AttributeSet current = doc.getCharacterElement(Math.max(pos - 1, 0)).getAttributes();
+            boolean isBold = StyleConstants.isBold(current);
+            boolean isItalic = StyleConstants.isItalic(current);
 
-            boolean isBold = StyleConstants.isBold(current) ^ (style == Font.BOLD);
-            boolean isItalic = StyleConstants.isItalic(current) ^ (style == Font.ITALIC);
+            if (style == Font.BOLD) StyleConstants.setBold(attrs, !isBold);
+            if (style == Font.ITALIC) StyleConstants.setItalic(attrs, !isItalic);
 
-            StyleConstants.setBold(attrs, isBold);
-            StyleConstants.setItalic(attrs, isItalic);
+            applyAttributesToSelection(textPane, doc, attrs);
+        }
+    }
 
+    private void applyFontAttribute(java.util.function.Consumer<SimpleAttributeSet> consumer) {
+        JTextPane textPane = tabManager.getCurrentTextComponent();
+        if (textPane != null) {
+            StyledDocument doc = textPane.getStyledDocument();
+            SimpleAttributeSet attrs = new SimpleAttributeSet();
+            consumer.accept(attrs);
             applyAttributesToSelection(textPane, doc, attrs);
         }
     }
@@ -204,14 +164,10 @@ public class EditorMain extends JFrame implements ActionListener, TextAppender {
         int start = textPane.getSelectionStart();
         int end = textPane.getSelectionEnd();
 
-        try {
-            if (start == end) {
-                textPane.setCharacterAttributes(attrs, false);
-            } else {
-                doc.setCharacterAttributes(start, end - start, attrs, false);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
+        if (start == end) {
+            textPane.setCharacterAttributes(attrs, false);
+        } else {
+            doc.setCharacterAttributes(start, end - start, attrs, false);
         }
     }
 
@@ -220,21 +176,16 @@ public class EditorMain extends JFrame implements ActionListener, TextAppender {
         toolBar.setFloatable(false);
         toolBar.setBackground(new Color(80, 80, 85));
 
-        // Выбор шрифта
-        JComboBox<String> fontCombo = new JComboBox<>(
-                GraphicsEnvironment.getLocalGraphicsEnvironment()
-                        .getAvailableFontFamilyNames());
+        JComboBox<String> fontCombo = new JComboBox<>(GraphicsEnvironment
+                .getLocalGraphicsEnvironment()
+                .getAvailableFontFamilyNames());
         fontCombo.setSelectedItem("Consolas");
-        fontCombo.addActionListener(e ->
-                changeFontFamily((String)fontCombo.getSelectedItem()));
+        fontCombo.addActionListener(e -> changeFontFamily((String) fontCombo.getSelectedItem()));
 
-        // Выбор размера
-        JComboBox<Integer> sizeCombo = new JComboBox<>(new Integer[]{8,10,12,14,16,18,20,24});
+        JComboBox<Integer> sizeCombo = new JComboBox<>(new Integer[]{8, 10, 12, 14, 16, 18, 20, 24});
         sizeCombo.setSelectedItem(14);
-        sizeCombo.addActionListener(e ->
-                changeFontSize((Integer)sizeCombo.getSelectedItem()));
+        sizeCombo.addActionListener(e -> changeFontSize((Integer) sizeCombo.getSelectedItem()));
 
-        // Кнопки стилей
         JToggleButton boldBtn = createStyleButton("B", Font.BOLD);
         JToggleButton italicBtn = createStyleButton("I", Font.ITALIC);
 
@@ -252,26 +203,24 @@ public class EditorMain extends JFrame implements ActionListener, TextAppender {
 
     private JToggleButton createStyleButton(String text, int style) {
         JToggleButton btn = new JToggleButton(text);
-        btn.setBackground(new Color(80, 80, 85));
+        Color normalBg = new Color(80, 80, 85);
+        Color hoverBg = new Color(96, 208, 191);
+
+        btn.setBackground(normalBg);
         btn.setForeground(Color.WHITE);
         btn.setFocusPainted(false);
         btn.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
-
         btn.addActionListener(e -> toggleFontStyle(style));
 
         btn.addMouseListener(new MouseAdapter() {
-            public void mouseEntered(MouseEvent e) {
-                btn.setBackground(new Color(96, 208, 191));
-            }
-            public void mouseExited(MouseEvent e) {
-                btn.setBackground(new Color(80, 80, 85));
-            }
+            public void mouseEntered(MouseEvent e) { btn.setBackground(hoverBg); }
+            public void mouseExited(MouseEvent e) { btn.setBackground(normalBg); }
         });
 
         return btn;
     }
 
     public static void main(String[] args) {
-        new EditorMain();
+        SwingUtilities.invokeLater(EditorMain::new);
     }
 }

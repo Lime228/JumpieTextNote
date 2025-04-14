@@ -12,7 +12,7 @@ public class TabManager {
     private static final float ZOOM_STEP = 0.5f;
 
     public TabManager() {
-        tabbedPane = new JTabbedPane();
+        this.tabbedPane = new JTabbedPane();
     }
 
     public JTabbedPane getTabbedPane() {
@@ -23,86 +23,45 @@ public class TabManager {
         JTextPane textPane = createTextPane();
         JScrollPane scrollPane = new JScrollPane(textPane);
 
-        JPanel tabPanel = createTabHeader("New Document " + (tabbedPane.getTabCount() + 1), scrollPane);
+        String title = "New Document " + (tabbedPane.getTabCount() + 1);
+        JPanel tabHeader = createTabHeader(title, scrollPane);
 
-        SimpleAttributeSet attrs = new SimpleAttributeSet();
-        StyleConstants.setFontFamily(attrs, "Consolas");
-        StyleConstants.setFontSize(attrs, 14); // Базовый размер при 100%
-        StyleConstants.setForeground(attrs, Color.WHITE);
-
-        textPane.setParagraphAttributes(attrs, true);
-        textPane.getDocument().putProperty("baseZoom", 1.0f);
         tabbedPane.addTab(null, scrollPane);
-        tabbedPane.setTabComponentAt(tabbedPane.getTabCount() - 1, tabPanel);
+        tabbedPane.setTabComponentAt(tabbedPane.getTabCount() - 1, tabHeader);
         tabbedPane.setSelectedIndex(tabbedPane.getTabCount() - 1);
     }
 
     public void closeCurrentTab() {
         int index = tabbedPane.getSelectedIndex();
-        if (index != -1) {
-            tabbedPane.remove(index);
-        }
+        if (index != -1) tabbedPane.remove(index);
     }
 
     public JTextPane getCurrentTextComponent() {
         Component component = tabbedPane.getSelectedComponent();
-        if (component instanceof JScrollPane) {
-            return (JTextPane) ((JScrollPane) component).getViewport().getView();
+        if (component instanceof JScrollPane scroll) {
+            Component view = scroll.getViewport().getView();
+            if (view instanceof JTextPane textPane) return textPane;
         }
         return null;
     }
 
     public void updateTabTitle(String title) {
         int index = tabbedPane.getSelectedIndex();
-        if (index != -1) {
-            Component tabComponent = tabbedPane.getTabComponentAt(index);
-            if (tabComponent instanceof JPanel) {
-                for (Component comp : ((JPanel) tabComponent).getComponents()) {
-                    if (comp instanceof JPanel) {
-                        for (Component headerComp : ((JPanel) comp).getComponents()) {
-                            if (headerComp instanceof JLabel) {
-                                ((JLabel) headerComp).setText(title);
-                                return;
-                            }
+        if (index == -1) return;
+
+        Component tabComponent = tabbedPane.getTabComponentAt(index);
+        if (tabComponent instanceof JPanel panel) {
+            for (Component comp : panel.getComponents()) {
+                if (comp instanceof JPanel inner) {
+                    for (Component labelComp : inner.getComponents()) {
+                        if (labelComp instanceof JLabel label) {
+                            label.setText(title);
+                            return;
                         }
                     }
                 }
             }
         }
-    }
-
-    private JPanel createTabHeader(String title, JScrollPane scrollPane) {
-        JPanel tabPanel = new JPanel(new BorderLayout());
-        tabPanel.setOpaque(false);
-
-        JLabel tabLabel = new JLabel(title);
-        tabLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        tabLabel.setForeground(Color.white);
-
-        JButton closeButton = createCloseButton(scrollPane);
-
-
-        JPanel tabHeader = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
-        tabHeader.setOpaque(false);
-        tabHeader.add(tabLabel);
-        tabHeader.add(closeButton);
-
-        tabPanel.add(tabHeader, BorderLayout.CENTER);
-        return tabPanel;
-    }
-
-    private JButton createCloseButton(JScrollPane scrollPane) {
-        JButton closeButton = new JButton("x");
-        closeButton.setMargin(new Insets(0, 5, 0, 0));
-        closeButton.setBorderPainted(false);
-        closeButton.setContentAreaFilled(false);
-        closeButton.setFocusPainted(false);
-
-        closeButton.addActionListener(e -> {
-            int index = tabbedPane.indexOfComponent(scrollPane);
-            if (index != -1) tabbedPane.remove(index);
-        });
-        return closeButton;
     }
 
     public void zoomIn() {
@@ -114,10 +73,8 @@ public class TabManager {
     }
 
     public void resetZoom() {
-        // (1.0f = 100%)
-        float resetFactor = 1.0f / currentZoom;
+        scaleDocument(1.0f / currentZoom);
         currentZoom = 1.0f;
-        scaleDocument(resetFactor);
     }
 
     public void setZoom(float newZoom) {
@@ -131,61 +88,82 @@ public class TabManager {
 
     private void scaleDocument(float zoomFactor) {
         JTextPane textPane = getCurrentTextComponent();
-        if (textPane != null) {
-            try {
-                StyledDocument doc = textPane.getStyledDocument();
-                int length = doc.getLength();
+        if (textPane == null) return;
 
-                int caretPos = textPane.getCaretPosition();
-                int selStart = textPane.getSelectionStart();
-                int selEnd = textPane.getSelectionEnd();
+        try {
+            StyledDocument doc = textPane.getStyledDocument();
+            int length = doc.getLength();
 
-                for (int i = 0; i < length; ) {
-                    Element elem = doc.getCharacterElement(i);
-                    AttributeSet attrs = elem.getAttributes();
-                    int end = elem.getEndOffset();
+            int caretPos = textPane.getCaretPosition();
+            int selStart = textPane.getSelectionStart();
+            int selEnd = textPane.getSelectionEnd();
 
-                    SimpleAttributeSet newAttrs = new SimpleAttributeSet();
-                    newAttrs.addAttributes(attrs);
+            for (int i = 0; i < length;) {
+                Element elem = doc.getCharacterElement(i);
+                AttributeSet attrs = elem.getAttributes();
+                int end = elem.getEndOffset();
 
-                    int originalSize = StyleConstants.getFontSize(attrs);
-                    int newSize = Math.max(1, Math.round(originalSize * zoomFactor));
-                    StyleConstants.setFontSize(newAttrs, newSize);
+                SimpleAttributeSet newAttrs = new SimpleAttributeSet(attrs);
+                int originalSize = StyleConstants.getFontSize(attrs);
+                int newSize = Math.max(1, Math.round(originalSize * zoomFactor));
+                StyleConstants.setFontSize(newAttrs, newSize);
 
-                    doc.setCharacterAttributes(i, end - i, newAttrs, false);
-
-                    i = end;
-                }
-
-                textPane.setCaretPosition(caretPos);
-                textPane.select(selStart, selEnd);
-
-            } catch (Exception e) {
-                e.printStackTrace();
+                doc.setCharacterAttributes(i, end - i, newAttrs, false);
+                i = end;
             }
+
+            textPane.setCaretPosition(caretPos);
+            textPane.select(selStart, selEnd);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
+    }
+
+    private JPanel createTabHeader(String title, JScrollPane scrollPane) {
+        JLabel tabLabel = new JLabel(title);
+        tabLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        tabLabel.setForeground(Color.WHITE);
+
+        JButton closeButton = new JButton("x");
+        closeButton.setMargin(new Insets(0, 5, 0, 0));
+        closeButton.setBorderPainted(false);
+        closeButton.setContentAreaFilled(false);
+        closeButton.setFocusPainted(false);
+        closeButton.addActionListener(e -> {
+            int index = tabbedPane.indexOfComponent(scrollPane);
+            if (index != -1) tabbedPane.remove(index);
+        });
+
+        JPanel tabHeader = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+        tabHeader.setOpaque(false);
+        tabHeader.add(tabLabel);
+        tabHeader.add(closeButton);
+
+        JPanel tabPanel = new JPanel(new BorderLayout());
+        tabPanel.setOpaque(false);
+        tabPanel.add(tabHeader, BorderLayout.CENTER);
+
+        return tabPanel;
     }
 
     private static JTextPane createTextPane() {
         JTextPane textPane = new JTextPane() {
             @Override
             protected void paintComponent(Graphics g) {
-                Graphics2D g2d = (Graphics2D)g;
-                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
-                        RenderingHints.VALUE_ANTIALIAS_ON);
+                Graphics2D g2d = (Graphics2D) g;
+                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                 g2d.setColor(new Color(45, 45, 50));
                 g2d.fillRect(0, 0, getWidth(), getHeight());
                 super.paintComponent(g);
             }
         };
 
-        // Настройки по умолчанию
         SimpleAttributeSet attrs = new SimpleAttributeSet();
         StyleConstants.setFontFamily(attrs, "Consolas");
         StyleConstants.setFontSize(attrs, 14);
         StyleConstants.setForeground(attrs, Color.WHITE);
-        textPane.setParagraphAttributes(attrs, true);
 
+        textPane.setParagraphAttributes(attrs, true);
         textPane.setCaretColor(Color.WHITE);
         textPane.setSelectionColor(new Color(96, 208, 191));
         textPane.setSelectedTextColor(Color.BLACK);

@@ -6,30 +6,37 @@ import javax.swing.*;
 import java.io.File;
 
 public class VoiceRecognitionService {
-    private Recognizer recognizer;
+    private static final int SAMPLE_RATE = 16000;
+    private static final int BUFFER_SIZE = 4096;
+
+    private final JFrame parentFrame;
+    private final AudioFormat format;
+    private final Recognizer recognizer;
+
     private volatile TargetDataLine microphone;
     private volatile boolean isListening = false;
-    private final JFrame parentFrame;
+
     private Runnable onStateChange;
-    private final AudioFormat format;
 
     public VoiceRecognitionService(JFrame frame, String modelPath) {
         this.parentFrame = frame;
-        this.format = new AudioFormat(16000, 16, 1, true, false);
-        initializeModel(modelPath);
+        this.format = new AudioFormat(SAMPLE_RATE, 16, 1, true, false);
+        this.recognizer = initializeRecognizer(modelPath);
     }
 
-    private void initializeModel(String modelPath) {
+    private Recognizer initializeRecognizer(String modelPath) {
         try {
             File modelDir = new File(modelPath);
             if (!modelDir.exists()) {
                 showError("Папка с моделью не найдена: " + modelPath);
-                return;
+                return null;
             }
+
             Model model = new Model(modelPath);
-            recognizer = new Recognizer(model, 16000);
+            return new Recognizer(model, SAMPLE_RATE);
         } catch (Exception e) {
             showError("Ошибка загрузки модели: " + e.getMessage());
+            return null;
         }
     }
 
@@ -42,60 +49,52 @@ public class VoiceRecognitionService {
     }
 
     private void startRecognition(TextAppender appender) {
-        if (isListening) return;
+        if (isListening || recognizer == null) return;
 
         new Thread(() -> {
             try {
-                synchronized (this) {
-                    if (microphone != null) {
-                        closeMicrophone();
-                    }
+                openMicrophone();
 
-                    DataLine.Info info = new DataLine.Info(TargetDataLine.class, format);
-                    if (!AudioSystem.isLineSupported(info)) {
-                        showError("Микрофон не поддерживает нужный формат");
-                        return;
-                    }
-
-                    microphone = (TargetDataLine) AudioSystem.getLine(info);
-                    microphone.open(format);
-                    microphone.start();
-                    isListening = true;
-                    notifyStateChanged();
-                }
-
-                byte[] buffer = new byte[4096];
+                byte[] buffer = new byte[BUFFER_SIZE];
                 while (isListening) {
-                    TargetDataLine currentMic;
-                    synchronized (this) {
-                        currentMic = microphone;
-                    }
-
-                    if (currentMic != null) {
-                        int bytesRead = currentMic.read(buffer, 0, buffer.length);
-                        if (bytesRead > 0) {
-                            processAudio(buffer, bytesRead, appender);
-                        }
-                    } else {
-                        Thread.sleep(10);
+                    int bytesRead = microphone.read(buffer, 0, buffer.length);
+                    if (bytesRead > 0) {
+                        processAudio(buffer, bytesRead, appender);
                     }
                 }
+
             } catch (Exception e) {
                 showError("Ошибка распознавания: " + e.getMessage());
             } finally {
-                synchronized (this) {
-                    closeMicrophone();
-                    isListening = false;
-                    notifyStateChanged();
-                    if (recognizer != null) {
-                        String finalResult = recognizer.getFinalResult();
-                        if (finalResult != null) {
-                            appender.appendText(extractTextFromResult(finalResult));
-                        }
-                    }
-                }
+                cleanupAfterStop(appender);
             }
         }).start();
+    }
+
+    private synchronized void openMicrophone() throws LineUnavailableException {
+        if (microphone != null) closeMicrophone();
+
+        DataLine.Info info = new DataLine.Info(TargetDataLine.class, format);
+        if (!AudioSystem.isLineSupported(info)) {
+            showError("Микрофон не поддерживает нужный формат");
+            return;
+        }
+
+        microphone = (TargetDataLine) AudioSystem.getLine(info);
+        microphone.open(format);
+        microphone.start();
+        isListening = true;
+        notifyStateChanged();
+    }
+
+    private void processAudio(byte[] buffer, int bytesRead, TextAppender appender) {
+        if (recognizer.acceptWaveForm(buffer, bytesRead)) {
+            String result = recognizer.getResult();
+            String text = extractTextFromResult(result);
+            if (!text.isEmpty()) {
+                appender.appendText(text);
+            }
+        }
     }
 
     public synchronized void stopRecognition() {
@@ -106,43 +105,46 @@ public class VoiceRecognitionService {
         notifyStateChanged();
     }
 
-    private void processAudio(byte[] buffer, int bytesRead, TextAppender appender) {
-        if (recognizer.acceptWaveForm(buffer, bytesRead)) {
-            String result = recognizer.getResult();
-            if (result != null && !result.trim().equals("{\"text\" : \"\"}")) {
-                appender.appendText(extractTextFromResult(result));
+    private void cleanupAfterStop(TextAppender appender) {
+        synchronized (this) {
+            closeMicrophone();
+            isListening = false;
+            notifyStateChanged();
+
+            if (recognizer != null) {
+                String finalText = extractTextFromResult(recognizer.getFinalResult());
+                if (!finalText.isEmpty()) {
+                    appender.appendText(finalText);
+                }
             }
         }
     }
 
     private synchronized void closeMicrophone() {
-        try {
-            if (microphone != null) {
+        if (microphone != null) {
+            try {
                 microphone.stop();
                 microphone.close();
+            } catch (Exception e) {
+                System.err.println("Ошибка при закрытии микрофона: " + e.getMessage());
+            } finally {
                 microphone = null;
             }
-        } catch (Exception e) {
-            System.err.println("Ошибка при закрытии микрофона: " + e.getMessage());
         }
     }
 
     private String extractTextFromResult(String jsonResult) {
-        if (jsonResult == null) return "";
+        if (jsonResult == null || !jsonResult.contains("\"text\" : \"")) return "";
 
-        int textIndex = jsonResult.indexOf("\"text\" : \"") + 10;
-        if (textIndex >= 10) {
-            int endIndex = jsonResult.indexOf("\"", textIndex);
-            if (endIndex > textIndex) {
-                return jsonResult.substring(textIndex, endIndex) + " ";
-            }
-        }
-        return "";
+        int start = jsonResult.indexOf("\"text\" : \"") + 10;
+        int end = jsonResult.indexOf("\"", start);
+        return (start > 10 && end > start) ? jsonResult.substring(start, end) + " " : "";
     }
 
     private void showError(String message) {
         SwingUtilities.invokeLater(() ->
-                JOptionPane.showMessageDialog(parentFrame, message));
+                JOptionPane.showMessageDialog(parentFrame, message)
+        );
     }
 
     private void notifyStateChanged() {
